@@ -1,0 +1,20 @@
+# Gem build
+pkg/
+*.gem
+
+# Bundler
+.bundle/
+vendor/bundle/
+Gemfile.lock
+
+# Testing
+coverage/
+.rspec_status
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

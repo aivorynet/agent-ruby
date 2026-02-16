@@ -1,0 +1,52 @@
+image: ruby:3.2
+
+stages:
+  - lint
+  - test
+  - build
+  - publish
+
+variables:
+  GEM_HOME: "$CI_PROJECT_DIR/.gem"
+
+cache:
+  paths:
+    - .gem/
+
+before_script:
+  - export PATH=$GEM_HOME/bin:$PATH
+
+lint:
+  stage: lint
+  script:
+    - gem install rubocop
+    - rubocop
+  allow_failure: true
+
+test:
+  stage: test
+  script:
+    - bundle install
+    - bundle exec rspec
+  allow_failure: true
+
+build:
+  stage: build
+  script:
+    - gem build aivory_monitor.gemspec
+  artifacts:
+    paths:
+      - "*.gem"
+    expire_in: 1 hour
+
+publish:rubygems:
+  stage: publish
+  script:
+    - mkdir -p ~/.gem
+    - echo ":rubygems_api_key: $GEM_HOST_API_KEY" > ~/.gem/credentials
+    - chmod 0600 ~/.gem/credentials
+    - gem push *.gem
+  only:
+    - /^v\d+\.\d+\.\d+$/
+  dependencies:
+    - build
