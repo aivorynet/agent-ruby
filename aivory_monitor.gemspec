@@ -2,14 +2,18 @@
 
 Gem::Specification.new do |spec|
   spec.name          = "aivory_monitor"
-  spec.version       = "1.0.0"
+  spec.version       = "0.1.0"
   spec.authors       = ["AIVory"]
   spec.email         = ["support@aivory.net"]
 
   spec.summary       = "AIVory Monitor - Runtime exception monitoring agent for Ruby applications"
   spec.description   = "Real-time exception monitoring with AI-powered analysis for Ruby applications. Captures exceptions, stack traces, and local variables with zero performance impact."
-  spec.homepage      = "https://aivory.net/monitor"
+  spec.homepage      = "https://aivory.net/monitor/"
   spec.license       = "MIT"
+  spec.metadata      = {
+    "source_code_uri"  => "https://github.com/aivorynet/agent-ruby",
+    "bug_tracker_uri"  => "https://github.com/aivorynet/agent-ruby/issues"
+  }
 
   spec.required_ruby_version = ">= 2.7.0"
 
