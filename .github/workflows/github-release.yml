@@ -1,13 +1,22 @@
-name: Create GitHub Release
-
+name: Release and Publish
 on:
   push:
-    tags:
-      - 'v*'
-
+    tags: ['v*']
+permissions:
+  contents: write
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: bundle exec rspec
   release:
     runs-on: ubuntu-latest
+    needs: ci
     permissions:
       contents: write
     steps:
@@ -15,3 +24,20 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+  publish:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Build gem
+        run: gem build aivory_monitor.gemspec
+      - name: Publish to RubyGems
+        run: |
+          mkdir -p ~/.gem
+          echo "---" > ~/.gem/credentials
+          echo ":rubygems_api_key: ${{ secrets.GEM_HOST_API_KEY }}" >> ~/.gem/credentials
+          chmod 0600 ~/.gem/credentials
+          gem push aivory_monitor-*.gem
