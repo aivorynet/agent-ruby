@@ -122,6 +122,19 @@ module AIVoryMonitor
       send_message("snapshot", payload)
     end
 
+    # Sends a breakpoint hit to the backend.
+    def send_breakpoint_hit(breakpoint_id, payload)
+      payload[:breakpoint_id] = breakpoint_id
+      payload[:agent_id] = @agent_id
+
+      send_message("breakpoint_hit", payload)
+    end
+
+    # Registers a callback for breakpoint commands from the backend.
+    def set_breakpoint_callback(&block)
+      @breakpoint_callback = block
+    end
+
     # Registers an event handler.
     def on(event, &block)
       @event_handlers[event.to_s] = block
@@ -238,8 +251,10 @@ module AIVoryMonitor
       when "error"
         handle_error(message["payload"])
       when "set_breakpoint"
+        @breakpoint_callback&.call("set", message["payload"])
         emit("set_breakpoint", message["payload"])
       when "remove_breakpoint"
+        @breakpoint_callback&.call("remove", message["payload"])
         emit("remove_breakpoint", message["payload"])
       end
     rescue JSON::ParserError => e

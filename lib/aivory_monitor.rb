@@ -5,6 +5,7 @@ require_relative "aivory_monitor/config"
 require_relative "aivory_monitor/models"
 require_relative "aivory_monitor/backend_connection"
 require_relative "aivory_monitor/exception_capture"
+require_relative "aivory_monitor/trace_manager"
 
 # AIVory Monitor Ruby Agent
 #
@@ -81,6 +82,12 @@ module AIVoryMonitor
         # Install exception handlers
         @exception_capture.install
 
+        # Initialize breakpoint support
+        if config.enable_breakpoints
+          @trace_manager = TraceManager.new(config, @connection)
+          @trace_manager.enable
+        end
+
         # Connect to backend
         @connection.connect
 
@@ -131,6 +138,7 @@ module AIVoryMonitor
 
         puts "[AIVory Monitor] Shutting down agent" if @config&.debug
 
+        @trace_manager&.disable
         @exception_capture&.uninstall
         @connection&.disconnect
 
@@ -138,6 +146,7 @@ module AIVoryMonitor
         @config = nil
         @connection = nil
         @exception_capture = nil
+        @trace_manager = nil
       end
     end
 
