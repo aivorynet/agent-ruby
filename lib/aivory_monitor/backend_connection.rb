@@ -34,7 +34,7 @@ module AIVoryMonitor
         uri = URI.parse(@config.backend_url)
         host = uri.host || "api.aivory.net"
         port = uri.port || (uri.scheme == "wss" ? 443 : 80)
-        path = uri.path.empty? ? "/ws/monitor/agent" : uri.path
+        path = uri.path.empty? ? "/monitor/agent" : uri.path
 
         # Create TCP socket
         @socket = TCPSocket.new(host, port)
