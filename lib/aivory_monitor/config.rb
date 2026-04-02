@@ -20,7 +20,7 @@ module AIVoryMonitor
       max_reconnect_attempts: nil
     )
       @api_key = api_key || ENV.fetch("AIVORY_API_KEY", "")
-      @backend_url = backend_url || ENV.fetch("AIVORY_BACKEND_URL", "wss://api.aivory.net/monitor/agent")
+      @backend_url = backend_url || ENV.fetch("AIVORY_BACKEND_URL", "wss://api.aivory.net/ws/agent")
       @environment = environment || ENV.fetch("AIVORY_ENVIRONMENT", "production")
       @application_name = application_name || ENV["AIVORY_APP_NAME"]
       @sampling_rate = (sampling_rate || ENV.fetch("AIVORY_SAMPLING_RATE", "1.0")).to_f

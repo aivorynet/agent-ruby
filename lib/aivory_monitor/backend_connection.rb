@@ -24,6 +24,7 @@ module AIVoryMonitor
       @event_handlers = {}
       @mutex = Mutex.new
       @heartbeat_thread = nil
+      @heartbeat_generation = 0
     end
 
     # Connects to the backend.
@@ -34,7 +35,7 @@ module AIVoryMonitor
         uri = URI.parse(@config.backend_url)
         host = uri.host || "api.aivory.net"
         port = uri.port || (uri.scheme == "wss" ? 443 : 80)
-        path = uri.path.empty? ? "/monitor/agent" : uri.path
+        path = uri.path.empty? ? "/ws/agent" : uri.path
 
         # Create TCP socket
         @socket = TCPSocket.new(host, port)
@@ -200,10 +201,16 @@ module AIVoryMonitor
     end
 
     def start_heartbeat
+      stop_heartbeat
+
+      @heartbeat_generation += 1
+      generation = @heartbeat_generation
+
       @heartbeat_thread = Thread.new do
         loop do
           sleep(@config.heartbeat_interval_ms / 1000.0)
           break unless @connected
+          break unless generation == @heartbeat_generation
 
           send_message("heartbeat", {
             timestamp: (Time.now.to_f * 1000).to_i,
@@ -217,6 +224,7 @@ module AIVoryMonitor
     end
 
     def stop_heartbeat
+      @heartbeat_generation += 1
       @heartbeat_thread&.kill
       @heartbeat_thread = nil
     end
@@ -351,6 +359,8 @@ module AIVoryMonitor
     end
 
     def read_websocket_frame
+      return nil unless wait_readable(1.0)
+
       header = active_socket.read(2)
       return nil unless header && header.length == 2
 
@@ -359,20 +369,41 @@ module AIVoryMonitor
       length = byte2 & 0x7f
 
       if length == 126
+        return nil unless wait_readable(1.0)
+
         length = active_socket.read(2).unpack1("n")
       elsif length == 127
+        return nil unless wait_readable(1.0)
+
         length = active_socket.read(8).unpack1("Q>")
       end
 
       if masked
+        return nil unless wait_readable(1.0)
+
         mask = active_socket.read(4)
+        return nil unless wait_readable(1.0)
+
         payload = active_socket.read(length)
         payload.bytes.map.with_index { |b, i| b ^ mask.bytes[i % 4] }.pack("C*")
       else
+        return nil unless wait_readable(1.0)
+
         active_socket.read(length)
       end
     rescue StandardError
       nil
+    end
+
+    # Waits for the socket to become readable within the given timeout.
+    #
+    # @param timeout [Float] seconds to wait
+    # @return [Boolean] true if readable, false on timeout
+    def wait_readable(timeout)
+      sock = active_socket
+      return false unless sock
+
+      IO.select([sock], nil, nil, timeout) ? true : false
     end
   end
 end
